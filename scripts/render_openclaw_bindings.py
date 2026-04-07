@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import base64
 import json
 import shutil
 import subprocess
 import sys
+import zlib
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -516,12 +518,15 @@ def render_markdown(
     if include_mermaid and bindings:
         mermaid = render_mermaid(bindings)
         if mermaid:
+            static_svg_url = build_mermaid_ink_svg_url(mermaid)
             lines.append("")
             lines.append("## Mermaid")
             lines.append("")
             lines.append("```mermaid")
             lines.extend(mermaid)
             lines.append("```")
+            lines.append("")
+            lines.append(f"Static Diagram: [Open SVG]({static_svg_url})")
 
     return "\n".join(lines).strip() + "\n"
 
@@ -547,6 +552,16 @@ def render_mermaid(bindings: list[BindingRecord]) -> list[str]:
             f'  {channel_nodes[channel_key]} -->|"{escape_mermaid(edge_label)}"| {agent_nodes[agent_key]}'
         )
     return lines
+
+
+def build_mermaid_ink_svg_url(mermaid_lines: list[str]) -> str:
+    payload = {
+        "code": "\n".join(mermaid_lines),
+        "mermaid": {"theme": "default"},
+    }
+    compressed = zlib.compress(json.dumps(payload, separators=(",", ":")).encode("utf-8"), 9)
+    encoded = base64.b64encode(compressed).decode("ascii").replace("+", "-").replace("/", "_")
+    return f"https://mermaid.ink/svg/pako:{encoded}?bgColor=!white"
 
 
 def escape_table(value: str) -> str:
