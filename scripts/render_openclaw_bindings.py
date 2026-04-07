@@ -3,6 +3,7 @@
 import argparse
 import base64
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -538,14 +539,16 @@ def render_mermaid(bindings: list[BindingRecord]) -> list[str]:
 
     for index, binding in enumerate(bindings, start=1):
         channel_key = binding.route_key
+        channel_label = sanitize_mermaid_label(channel_key)
         if channel_key not in channel_nodes:
             channel_nodes[channel_key] = f"c{len(channel_nodes) + 1}"
-            lines.append(f'  {channel_nodes[channel_key]}["{escape_mermaid(channel_key)}"]')
+            lines.append(f'  {channel_nodes[channel_key]}["{escape_mermaid(channel_label)}"]')
 
         agent_key = binding.agent_id or "unknown-agent"
+        agent_label = sanitize_mermaid_label(agent_key)
         if agent_key not in agent_nodes:
             agent_nodes[agent_key] = f"a{len(agent_nodes) + 1}"
-            lines.append(f'  {agent_nodes[agent_key]}["{escape_mermaid(agent_key)}"]')
+            lines.append(f'  {agent_nodes[agent_key]}["{escape_mermaid(agent_label)}"]')
 
         edge_label = f"binding {index}"
         lines.append(
@@ -562,6 +565,18 @@ def build_mermaid_ink_svg_url(mermaid_lines: list[str]) -> str:
     compressed = zlib.compress(json.dumps(payload, separators=(",", ":")).encode("utf-8"), 9)
     encoded = base64.b64encode(compressed).decode("ascii").replace("+", "-").replace("/", "_")
     return f"https://mermaid.ink/svg/pako:{encoded}?bgColor=!white"
+
+
+def sanitize_mermaid_label(value: str, max_length: int = 96) -> str:
+    cleaned = re.sub(r"\s+", " ", value).strip()
+    cleaned = cleaned.replace('"', "'")
+    cleaned = re.sub(r"[\[\]\{\}\|<>`]", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if not cleaned:
+        cleaned = "unknown"
+    if len(cleaned) > max_length:
+        cleaned = cleaned[: max_length - 3].rstrip() + "..."
+    return cleaned
 
 
 def escape_table(value: str) -> str:
