@@ -1,52 +1,82 @@
 # openclaw-bindings-status
 
-一个面向 OpenClaw 的轻量 skill，用自然语言触发 `openclaw agents list --bindings` / `openclaw agents bindings`，把原始 CLI 输出整理成更直观的绑定状态看板。
+[简体中文](./README.zh-CN.md)
 
-## 能力
+`openclaw-bindings-status` is a lightweight OpenClaw skill that turns `openclaw agents list --bindings` output into a clearer status dashboard.
 
-- 展示 agent 与 workspace 的概览
-- 按 channel / account / peer scope 汇总绑定关系
-- 输出易读的 Markdown 表格
-- 生成可复制的 Mermaid 连线图
-- 仅依赖 Python 标准库
+Instead of asking users to read raw CLI payloads, this skill lets them ask in natural language which agents are bound to which channels, how DM and group routing works, and which workspaces are currently in play.
 
-## 适合的提问方式
+## Features
 
-- “帮我看看 OpenClaw 现在哪些 agent 绑定了哪些 channel”
-- “把我的 openclaw bindings 状态可视化”
-- “我想知道单聊、群聊分别路由到哪个 agent”
-- “解释一下 `openclaw agents list --bindings` 现在的配置”
+- Summarize agent and workspace status in a compact dashboard
+- Group bindings by channel, account, and peer scope
+- Render readable Markdown tables
+- Generate a Mermaid wiring diagram for route visualization
+- Keep dependencies minimal by using only the Python standard library
 
-## 安装
+## Example Prompts
 
-把这个仓库放到你的 skills 目录，并保留目录名为 `openclaw-bindings-status`：
+- "Show me my OpenClaw bindings status"
+- "Which agent is bound to Telegram group chats?"
+- "Visualize my OpenClaw agent-channel bindings"
+- "Explain the result of `openclaw agents list --bindings`"
+
+## Installation
+
+Clone this repository into your skills directory and keep the folder name as `openclaw-bindings-status`:
 
 ```bash
 git clone https://github.com/sleep9ull/openclaw-bindings-status.git "${CODEX_HOME:-$HOME/.codex}/skills/openclaw-bindings-status"
 ```
 
-## 本地调试
+## Usage
 
-如果本机 `openclaw` 已可用，直接运行：
+The skill prefers JSON output because it is easier to parse reliably:
+
+```bash
+openclaw agents list --bindings --json
+```
+
+For local debugging, run the renderer directly:
 
 ```bash
 python3 scripts/render_openclaw_bindings.py
 ```
 
-如果你已经拿到了 JSON 输出，也可以走 stdin：
+If you already captured JSON output, pipe it into stdin:
 
 ```bash
 openclaw agents list --bindings --json | python3 scripts/render_openclaw_bindings.py --stdin
 ```
 
-如果组合命令更稳定，也可以分两步让脚本自己回退：
+You can also render a saved JSON file:
 
 ```bash
-python3 scripts/render_openclaw_bindings.py
+python3 scripts/render_openclaw_bindings.py --from-json ./bindings.json
 ```
 
-## 仓库结构
+## Output
 
-- `SKILL.md`: skill 触发描述与工作流
-- `agents/openai.yaml`: UI 元信息
-- `scripts/render_openclaw_bindings.py`: 绑定状态渲染器
+The renderer produces a small Markdown dashboard with:
+
+- `Summary`: totals for agents, bindings, channels, wildcard routes, and peer-scoped routes
+- `Agent Table`: agent, workspace, default status, binding count, and channel coverage
+- `Wiring View`: line-by-line readable routes
+- `Mermaid`: optional `flowchart LR` graph for visual inspection
+- `Notes`: warnings for wildcard bindings, missing metadata, or unbound agents
+
+## Limitations
+
+- The script works best when `openclaw` supports JSON output.
+- If `openclaw` is not available on `PATH`, use `--stdin` or `--from-json`.
+- The exact JSON schema may vary across OpenClaw versions, so some field mapping may need follow-up tuning against real-world payloads.
+
+## Repository Layout
+
+- `SKILL.md`: trigger conditions and workflow guidance for the skill
+- `agents/openai.yaml`: UI metadata for the skill
+- `scripts/render_openclaw_bindings.py`: OpenClaw bindings renderer
+
+## License
+
+[MIT](./LICENSE)
