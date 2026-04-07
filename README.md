@@ -22,7 +22,7 @@
 把这个仓库放到你的 skills 目录，并保留目录名为 `openclaw-bindings-status`：
 
 ```bash
-git clone <your-repo-url> "${CODEX_HOME:-$HOME/.codex}/skills/openclaw-bindings-status"
+git clone https://github.com/sleep9ull/openclaw-bindings-status.git "${CODEX_HOME:-$HOME/.codex}/skills/openclaw-bindings-status"
 ```
 
 ## 本地调试
