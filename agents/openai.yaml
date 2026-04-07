@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenClaw Bindings"
+  short_description: "Show agent-channel binding status visually"
+  default_prompt: "Use $openclaw-bindings-status to inspect my OpenClaw agent and channel binding status."
